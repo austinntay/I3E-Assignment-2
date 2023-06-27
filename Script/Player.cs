@@ -54,6 +54,7 @@ public class Player : MonoBehaviour
     public GameObject CrystalsOnDoor;
     public GameObject DoorPrompt;
     public GameObject NotEnoughCrystalsPrompt;
+    public GameObject PlayerEnemy;
 
     //Audio source for the player//
     public AudioSource audioPlayer;
@@ -136,9 +137,9 @@ public class Player : MonoBehaviour
         Dialog.text = "This is control, your spaceship's power core was lost when entering this planet's atmosphere.";
         Station.SetActive(true);
         BackGround.SetActive(true);
-        yield return new WaitForSeconds(5f);
+        yield return new WaitForSeconds(4f);
         Dialog.text = "scanners show a functional power core behind a locked door in that cave.";
-        yield return new WaitForSeconds(7f);
+        yield return new WaitForSeconds(4f);
         Dialog.text = "you're going to need to find 4 gems to open that door, good luck.";
         yield return new WaitForSeconds(6f);
         Dialog.text = "";
@@ -155,7 +156,14 @@ public class Player : MonoBehaviour
         congratsMessage.SetActive(false);
 
     }
+    //plays when the player steps on the prompt for being near an enemy//
+    public IEnumerator EnemyPrompt()
+    {
+        PlayerEnemy.SetActive(true);
+        yield return new WaitForSeconds(7f);
+        PlayerEnemy.SetActive(false);
 
+    }
 
     /// <summary>
     /// Called when the object collides with another object.
@@ -171,7 +179,7 @@ public class Player : MonoBehaviour
 
     }
 
-    //if player exits the range of the crystal deactivate the prompt//
+    //if player exits the range of the certain promt triggers, remove those triggers//
     private void OnCollisionExit(Collision collision)
     {
         Debug.Log(collision.gameObject.name);
@@ -187,12 +195,12 @@ public class Player : MonoBehaviour
             AddForce(new Vector3(0, 7, 0), ForceMode.Impulse);
     }
 
-    //used to show the intro dialog and remove the trigger so it only plays once//
+   
     private void OnTriggerEnter(Collider collision)
     {
-        if (collision.gameObject.tag == "Starting")
+        if (collision.gameObject.tag == "InstaKill")
         {
-            StartCoroutine(IntroDialog());
+            KillPlayer();
         }
 
     }
@@ -234,13 +242,21 @@ public class Player : MonoBehaviour
             }
 
         }
+        //used to show the intro dialog and remove the trigger so it only plays once//
         else if (collision.gameObject.tag == "Starting")
         {
             StartCoroutine(IntroDialog());
             IntroDialog();
             collision.gameObject.SetActive(false);
         }
+        //used to show the prompt when the player goes near an enemy//
+        else if (collision.gameObject.tag == "NearEnemy")
+        {
+            StartCoroutine(EnemyPrompt());
+            EnemyPrompt();
+            collision.gameObject.SetActive(false);
 
+        }
 
         else if (collision.gameObject.tag == "BlockedOff")
         {

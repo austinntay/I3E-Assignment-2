@@ -13849,7 +13849,7 @@ GameObject:
   - component: {fileID: 1010344953}
   - component: {fileID: 1010344952}
   m_Layer: 0
-  m_Name: Starting Tigger
+  m_Name: Starting Trigger
   m_TagString: Starting
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
