@@ -33,19 +33,19 @@ public class Player : MonoBehaviour
     /// <summary>
     /// The speed at which the player rotates
     /// </summary>
-    float rotationSpeed = 60f;
+    float rotationSpeed = 30f;
 
     /// <summary>
     /// The text object used to display the current score.
     /// </summary>
     public TextMeshProUGUI displayText;
-    public TextMeshProUGUI PlayerDeath;
+    
     public TextMeshProUGUI Dialog;
     public TextMeshProUGUI PlayerSpeech;
 
 
     /// <summary>
-    /// The text object used to hold the congratulatory message.
+    /// The text object used to hold multiple prompts for the player.
     /// </summary>
     public GameObject congratsMessage;
     public GameObject Prompt;
@@ -55,6 +55,7 @@ public class Player : MonoBehaviour
     public GameObject DoorPrompt;
     public GameObject NotEnoughCrystalsPrompt;
     public GameObject PlayerEnemy;
+    public GameObject PlayerDeath;
 
     //Audio source for the player//
     public AudioSource audioPlayer;
@@ -112,21 +113,71 @@ public class Player : MonoBehaviour
             RaycastHit hitInfo;
             if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out hitInfo, interactionDistance))
             {
-                Debug.Log(hitInfo.transform.name);
-               if (hitInfo.transform.tag == "Collectibles")
+               Debug.Log(hitInfo.transform.name);
+                if (hitInfo.transform.tag == "Cryst1")
                 {
-                   if (interact)
+                    Prompt.SetActive(true);
+                    if (interact)
                     {
+                        Prompt.SetActive(false);
+                        //tells the crysyal to be collected//
                         hitInfo.transform.GetComponent<Crystal>().Collected();
+
+                        // Increase the player score.
+                        playerScore += 1;
+
+                        // Increase the number of coins collected.//
+                        ++crystalCollected;
+
+                        // Update the displayed score
+                        displayText.text = "Crystals           " + crystalCollected + "/4";
+
+                        //play collected sound//
+                        audioPlayer.Play();
+
+                        if (crystalCollected >= 4)
+                        {
+                            StartCoroutine(CongratsPrompt());
+                        }
+                    }
+                }
+                else if (hitInfo.transform.tag == "FinalDoor")
+                {
+                    if (crystalCollected >= 4)
+                    {
+                        DoorPrompt.SetActive(true);
+                        if (interact)
+                        {
+                            CrystalsOnDoor.SetActive(true);
+                            hitInfo.transform.GetComponent<DoorOpen>().Unlocked();
+                            audioPlayer.Play();
+                        }
+
+                    }
+
+                    else if (crystalCollected < 4)
+                    {
+                        NotEnoughCrystalsPrompt.SetActive(true);
                     }
                 }
                
+            }
+            else
+            {
+                Prompt.SetActive(false);
+                DoorPrompt.SetActive(false);
+                NotEnoughCrystalsPrompt.SetActive(false);
             }
         }
 
       
 
         interact = false;
+    }
+
+    void Start()
+    {
+        isDead = false;
     }
 
 
@@ -160,7 +211,7 @@ public class Player : MonoBehaviour
     public IEnumerator EnemyPrompt()
     {
         PlayerEnemy.SetActive(true);
-        yield return new WaitForSeconds(7f);
+        yield return new WaitForSeconds(4f);
         PlayerEnemy.SetActive(false);
 
     }
@@ -207,43 +258,10 @@ public class Player : MonoBehaviour
 
     private void OnTriggerStay(Collider collision)
     {
-
         // Check if the collided object has the Collectibles tag.
-        if (collision.gameObject.tag == "Cryst1")
-        {
-            Prompt.SetActive(true);
-
-            if (Input.GetKey(KeyCode.E))
-            {
-
-                Prompt.SetActive(false);
-                //tells the crysyal to be collected//
-                collision.gameObject.GetComponent<Crystal>().Collected();
-
-                // Increase the player score.
-                playerScore += 1;
-
-                // Increase the number of coins collected.//
-                ++crystalCollected;
-
-                // Update the displayed score
-                displayText.text = "Crystals           " + crystalCollected + "/4";
-
-                //play collected sound//
-                audioPlayer.Play();
-
-                if (crystalCollected >= 4)
-                {
-                    StartCoroutine(CongratsPrompt());
-                }
-
-
-
-            }
-
-        }
+        
         //used to show the intro dialog and remove the trigger so it only plays once//
-        else if (collision.gameObject.tag == "Starting")
+        if (collision.gameObject.tag == "Starting")
         {
             StartCoroutine(IntroDialog());
             IntroDialog();
@@ -263,30 +281,18 @@ public class Player : MonoBehaviour
             PlayerSpeech.text = "Dang rocks , can't go there.";
         }
 
-        else if (collision.gameObject.tag == "FinalDoor")
-        {
-            if (crystalCollected >= 4)
-            {
-                DoorPrompt.SetActive(true);
-            }
-
-            else if (crystalCollected < 4)
-            {
-                NotEnoughCrystalsPrompt.SetActive(true);
-            }
-        }
+        
     }
 
        
     
 
-
+    //remove any prompts when the player exits the range of the triggers//
     private void OnTriggerExit(Collider collision)
     {
         Prompt.SetActive(false);
         PlayerSpeech.text = "";
-        DoorPrompt.SetActive(false);
-        NotEnoughCrystalsPrompt.SetActive(false);
+      
 
     }
 
@@ -296,8 +302,8 @@ public class Player : MonoBehaviour
     void KillPlayer()
     {
         isDead = true;
-        GetComponent<Animator>().SetTrigger("death");
-        PlayerDeath.text = "You Died";
+        GetComponent<Animator>().SetTrigger("Death");
+        PlayerDeath.SetActive(true);
     }
     
  
@@ -328,7 +334,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    void OnFire()
+    void OnInteract()
     {
       interact = true;
     }
