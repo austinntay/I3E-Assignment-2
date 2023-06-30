@@ -1,6 +1,6 @@
 /*
  * Author: Austin Tay Rei Chong
- * Date: 
+ * Date:  30/6/2023
  * Description: This is a script which contains all interactions and movements of the player
  */
 
@@ -28,7 +28,7 @@ public class Player : MonoBehaviour
     /// <summary>
     /// The movement speed of the player per second.
     /// </summary>
-    float moveSpeed = 19f;
+    float moveSpeed = 7f;
 
     /// <summary>
     /// The speed at which the player rotates
@@ -36,16 +36,19 @@ public class Player : MonoBehaviour
     float rotationSpeed = 30f;
 
     /// <summary>
-    /// The text object used to display the current score.
+    /// The text object used to display the current score, dialog , and the player's inner thoughts.
     /// </summary>
     public TextMeshProUGUI displayText;
-    
     public TextMeshProUGUI Dialog;
     public TextMeshProUGUI PlayerSpeech;
+   
 
 
     /// <summary>
     /// The text object used to hold multiple prompts for the player.
+    /// The Object for the power core that the player is holding
+    /// The photos for the staion master and the background for his text
+    /// The trigger for which the player steps in at the start to trigger the intro dialog
     /// </summary>
     public GameObject congratsMessage;
     public GameObject Prompt;
@@ -56,6 +59,15 @@ public class Player : MonoBehaviour
     public GameObject NotEnoughCrystalsPrompt;
     public GameObject PlayerEnemy;
     public GameObject PlayerDeath;
+    public GameObject PowerCoreOnPlayer;
+    public GameObject StartTrigger;
+    public GameObject PowerCoreStatusMissing;
+    public GameObject PowerCoreStatusActive;
+    public GameObject PowerCoreLightMissing;
+    public GameObject PowerCoreLightActive;
+
+
+
 
     //Audio source for the player//
     public AudioSource audioPlayer;
@@ -79,10 +91,18 @@ public class Player : MonoBehaviour
     /// Tracks whether the player is dead or not.
     /// </summary>
     bool isDead = false;
-
-    float interactionDistance = 3f;
-
+    /// <summary>
+    /// sets the distance for which the player can interact with objects
+    /// </summary>
+    float interactionDistance = 4f;
+    /// <summary>
+    /// the player isnt interacting on default unless he presses E
+    /// </summary>
     bool interact = false;
+    /// <summary>
+    /// A bool for when the player collects the power core at the end of the game
+    /// </summary>
+    bool PowerCoreCollected = false; 
 
     Vector3 headRotationInput;
 
@@ -141,6 +161,8 @@ public class Player : MonoBehaviour
                         }
                     }
                 }
+
+                //when player hits the final door, if they have all 4 crystals , play door open anim//
                 else if (hitInfo.transform.tag == "FinalDoor")
                 {
                     if (crystalCollected >= 4)
@@ -154,13 +176,42 @@ public class Player : MonoBehaviour
                         }
 
                     }
-
+                    //when player hits the final door, if they do not have 4 crystals, the player will be prompted to collect all 4 first//
                     else if (crystalCollected < 4)
                     {
                         NotEnoughCrystalsPrompt.SetActive(true);
                     }
                 }
-               
+                else if (hitInfo.transform.tag == "PowerCore")
+                {
+                    Prompt.SetActive(true);
+
+                    if (interact)
+                    {
+                        hitInfo.transform.GetComponent<PowerCore>().Taken();
+                        Prompt.SetActive(false);
+                        PowerCoreOnPlayer.SetActive(true);
+                        StartCoroutine(PowerCore());
+                        PowerCore();
+                        PowerCoreCollected = true;
+                    }
+                }
+
+                
+            }
+
+            else if (PowerCoreCollected)
+            {
+                PowerCoreStatusMissing.SetActive(false);
+                PowerCoreStatusActive.SetActive(true);
+                PowerCoreLightMissing.SetActive(false);
+                PowerCoreLightActive.SetActive(true);  
+            }
+
+
+            else if (PowerCoreCollected)
+            {
+                StartTrigger.SetActive(false);
             }
             else
             {
@@ -198,8 +249,36 @@ public class Player : MonoBehaviour
         BackGround.SetActive(false);
     }
 
-    
-    //shows the congrats message, waits for a few seconds then removes it//
+    //use to show the final dialog when the player is on his way out of the cave//
+
+    public IEnumerator FinalDialog()
+    {
+        Dialog.text = "You found the core, bring it back to the spaceship and you can finally go home.";
+        Station.SetActive(true);
+        BackGround.SetActive(true);
+        yield return new WaitForSeconds(5f);
+        Dialog.text = "";
+        Station.SetActive(false);
+        BackGround.SetActive(false);
+    }
+
+    /// <summary>
+    /// used to show after the player picks up the power core//
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerator PowerCore()
+    {
+        PlayerSpeech.text = "Got the power core, time to return to my spaceship.";
+        yield return new WaitForSeconds(5f);
+        PlayerSpeech.text = "";
+
+    }
+
+
+    /// <summary>
+    /// shows the congrats message, waits for a few seconds then removes it//
+    /// </summary>
+    /// <returns></returns>
     public IEnumerator CongratsPrompt()
     {
         congratsMessage.SetActive(true);
@@ -207,7 +286,10 @@ public class Player : MonoBehaviour
         congratsMessage.SetActive(false);
 
     }
-    //plays when the player steps on the prompt for being near an enemy//
+    /// <summary>
+    /// plays when the player steps on the prompt for being near an enemy//
+    /// </summary>
+    /// <returns></returns>
     public IEnumerator EnemyPrompt()
     {
         PlayerEnemy.SetActive(true);
@@ -230,16 +312,18 @@ public class Player : MonoBehaviour
 
     }
 
+    
     //if player exits the range of the certain promt triggers, remove those triggers//
     private void OnCollisionExit(Collision collision)
     {
         Debug.Log(collision.gameObject.name);
         Prompt.SetActive(false);
-        
 
     }
 
-    //used to jump//
+    /// <summary>
+    /// used to jump//
+    /// </summary>
     void OnEKeyboard()
     {
         GetComponent<Rigidbody>().
@@ -258,7 +342,7 @@ public class Player : MonoBehaviour
 
     private void OnTriggerStay(Collider collision)
     {
-        // Check if the collided object has the Collectibles tag.
+       
         
         //used to show the intro dialog and remove the trigger so it only plays once//
         if (collision.gameObject.tag == "Starting")
@@ -267,6 +351,7 @@ public class Player : MonoBehaviour
             IntroDialog();
             collision.gameObject.SetActive(false);
         }
+
         //used to show the prompt when the player goes near an enemy//
         else if (collision.gameObject.tag == "NearEnemy")
         {
@@ -275,13 +360,21 @@ public class Player : MonoBehaviour
             collision.gameObject.SetActive(false);
 
         }
-
+        //when the player goes near the blocked path//
         else if (collision.gameObject.tag == "BlockedOff")
         {
             PlayerSpeech.text = "Dang rocks , can't go there.";
         }
 
-        
+        else if (collision.gameObject.tag == "Final")
+        {
+            StartCoroutine(FinalDialog());
+            FinalDialog();
+            collision.gameObject.SetActive(false);
+        }
+
+       
+
     }
 
        
@@ -295,6 +388,8 @@ public class Player : MonoBehaviour
       
 
     }
+
+
 
     /// <summary>
     /// Used to kill the player.
@@ -333,7 +428,9 @@ public class Player : MonoBehaviour
             movementInput = value.Get<Vector2>();
         }
     }
-
+    /// <summary>
+    /// when the player presses E
+    /// </summary>
     void OnInteract()
     {
       interact = true;

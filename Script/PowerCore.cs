@@ -1,14 +1,14 @@
 /*
- * Author: AustinTayReiChong
- * Date: 
- * Description: This is a simple script on the collection of the crystals
+ * Author: Austin Tay Rei Chong
+ * Date:  30/6/2023
+ * Description: This is a script for the power core which the player picks up
  */
 
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DoorOpen : MonoBehaviour
+public class PowerCore : MonoBehaviour
 {
     /// <summary>
     /// Stores the score that each crystal is worth.
@@ -19,21 +19,15 @@ public class DoorOpen : MonoBehaviour
     /// <summary>
     /// The function to use when the cystal is collected.
     /// </summary>
-    public void Unlocked()
+    public void Taken()
     {
         // Disable the collider after being collected.
         GetComponent<Collider>().enabled = false;
+        Destroy(gameObject);
 
-
-        // Play the open animation.
-        GetComponent<Animator>().SetTrigger("Unlocked");
-        audioPlayer.Play();
 
 
 
     }
 
-
-
-   
 }

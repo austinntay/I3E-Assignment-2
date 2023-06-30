@@ -1,3 +1,9 @@
+/*
+ * Author: Austin Tay Rei Chong
+ * Date:  30/6/2023
+ * Description: This is a script for the menu
+ */
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
